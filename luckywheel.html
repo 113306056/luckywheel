@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>自訂獎項抽獎轉盤（含匯出）</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f0f4f8;
+      padding-top: 40px;
+    }
+    #wheelCanvas {
+      margin-top: 20px;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    .pointer {
+      width: 0; height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 30px solid #e74c3c;
+      margin: 0 auto -30px auto;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #history {
+      margin-top: 20px;
+      font-size: 16px;
+      max-height: 150px;
+      overflow-y: auto;
+      background: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: inline-block;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 抽獎轉盤</h1>
+  <div class="pointer"></div>
+  <canvas id="wheelCanvas" width="300" height="300"></canvas>
+  <br>
+  <button onclick="spin()">抽下一位</button>
+  <button onclick="downloadCSV()">匯出結果</button>
+  <div id="result"></div>
+  <div id="history"></div>
+
+  <script>
+    const prizePool = {
+      "黑熊先生布朗尼禮盒": 1,       
+      "墊腳石文具折價券": 250,      
+      "存在音樂購物金1000元":35 ,      
+      "存在音樂木吉他獎金1500元": 5
+    };
+
+    let prizeList = expandPrizePool(prizePool);
+    const colors = [
+      "#FF6B6B", "#F7B801", "#6BCB77", "#4D96FF",
+      "#B76EF9", "#FF9F1C", "#FFD6E0", "#06D6A0"
+    ];
+
+    const canvas = document.getElementById("wheelCanvas");
+    const ctx = canvas.getContext("2d");
+    let angle = 0;
+    let isSpinning = false;
+    let resultHistory = [];
+
+    function expandPrizePool(pool) {
+      const list = [];
+      for (const [prize, count] of Object.entries(pool)) {
+        for (let i = 0; i < count; i++) {
+          list.push(prize);
+        }
+      }
+      return list;
+    }
+
+    function drawWheel() {
+      const arc = 2 * Math.PI / prizeList.length;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < prizeList.length; i++) {
+        const startAngle = i * arc;
+        ctx.beginPath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.moveTo(150, 150);
+        ctx.arc(150, 150, 150, startAngle, startAngle + arc);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(150, 150);
+        ctx.rotate(startAngle + arc / 2);
+        ctx.fillStyle = "#fff";
+        ctx.font = "14px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(prizeList[i], 140, 5);
+        ctx.restore();
+      }
+    }
+
+    drawWheel();
+
+    function spin() {
+      if (isSpinning || prizeList.length === 0) return;
+      isSpinning = true;
+      document.getElementById('result').textContent = "";
+
+      const arc = 2 * Math.PI / prizeList.length;
+      const spins = Math.floor(Math.random() * 3) + 5;
+      const randomIndex = Math.floor(Math.random() * prizeList.length);
+      const endAngle = angle + spins * 2 * Math.PI + (prizeList.length - randomIndex - 0.5) * arc;
+
+      canvas.style.transition = "transform 2s ease-out";
+      canvas.style.transform = `rotate(${endAngle}rad)`;
+
+      setTimeout(() => {
+        angle = endAngle % (2 * Math.PI);
+        const selectedPrize = prizeList[randomIndex];
+
+        resultHistory.push(selectedPrize);
+        updateHistory();
+
+        prizeList.splice(randomIndex, 1);
+        drawWheel();
+
+        document.getElementById("result").textContent = `🎁 恭喜中獎：${selectedPrize}`;
+        isSpinning = false;
+      }, 2000);
+    }
+
+    function updateHistory() {
+      const list = resultHistory.map((p, i) => `${i + 1}. ${p}`).join('<br>');
+      document.getElementById("history").innerHTML = `<h3>抽獎記錄</h3>${list}`;
+    }
+
+    function downloadCSV() {
+      if (resultHistory.length === 0) return alert("尚未有抽獎結果！");
+      const csv = "編號,獎項\n" + resultHistory.map((p, i) => `${i + 1},${p}`).join("\n");
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "抽獎結果.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
