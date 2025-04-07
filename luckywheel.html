@@ -69,27 +69,11 @@
 
   <script>
     const prizePool = {
-      "黑熊先生布朗尼禮盒": 1,       
-      "墊腳石文具折價券": 250,      
-      "存在音樂購物金1000元":5 ,      
+      "黑熊先生布朗尼禮盒": 1,
+      "墊腳石文具折價券": 250,
+      "存在音樂購物金1000元": 5,
       "存在音樂木吉他獎金1500元": 5
     };
-
-    let resultHistory = JSON.parse(localStorage.getItem("resultHistory")) || [];
-    let prizeList = JSON.parse(localStorage.getItem("prizeList")) || expandPrizePool(prizePool);
-
-
-    let prizeList = expandPrizePool(prizePool);
-    const colors = [
-      "#FF6B6B", "#F7B801", "#6BCB77", "#4D96FF",
-      "#B76EF9", "#FF9F1C", "#FFD6E0", "#06D6A0"
-    ];
-
-    const canvas = document.getElementById("wheelCanvas");
-    const ctx = canvas.getContext("2d");
-    let angle = 0;
-    let isSpinning = false;
-    let resultHistory = [];
 
     function expandPrizePool(pool) {
       const list = [];
@@ -100,6 +84,19 @@
       }
       return list;
     }
+
+    let resultHistory = JSON.parse(localStorage.getItem("resultHistory")) || [];
+    let prizeList = JSON.parse(localStorage.getItem("prizeList")) || expandPrizePool(prizePool);
+
+    const colors = [
+      "#FF6B6B", "#F7B801", "#6BCB77", "#4D96FF",
+      "#B76EF9", "#FF9F1C", "#FFD6E0", "#06D6A0"
+    ];
+
+    const canvas = document.getElementById("wheelCanvas");
+    const ctx = canvas.getContext("2d");
+    let angle = 0;
+    let isSpinning = false;
 
     function drawWheel() {
       const arc = 2 * Math.PI / prizeList.length;
@@ -124,6 +121,7 @@
     }
 
     drawWheel();
+    updateHistory();
 
     function spin() {
       if (isSpinning || prizeList.length === 0) return;
@@ -143,9 +141,12 @@
         const selectedPrize = prizeList[randomIndex];
 
         resultHistory.push(selectedPrize);
-        updateHistory();
-
         prizeList.splice(randomIndex, 1);
+
+        localStorage.setItem("resultHistory", JSON.stringify(resultHistory));
+        localStorage.setItem("prizeList", JSON.stringify(prizeList));
+
+        updateHistory();
         drawWheel();
 
         document.getElementById("result").textContent = `🎁 恭喜中獎：${selectedPrize}`;
@@ -154,6 +155,10 @@
     }
 
     function updateHistory() {
+      if (resultHistory.length === 0) {
+        document.getElementById("history").innerHTML = "";
+        return;
+      }
       const list = resultHistory.map((p, i) => `${i + 1}. ${p}`).join('<br>');
       document.getElementById("history").innerHTML = `<h3>抽獎記錄</h3>${list}`;
     }
