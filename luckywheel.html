@@ -62,7 +62,7 @@
   <div class="pointer"></div>
   <canvas id="wheelCanvas" width="300" height="300"></canvas>
   <br>
-  <button onclick="spin()">抽下一位</button>
+  <button onclick="spin()">抽獎</button>
   <button onclick="downloadCSV()">匯出結果</button>
   <div id="result"></div>
   <div id="history"></div>
@@ -71,9 +71,13 @@
     const prizePool = {
       "黑熊先生布朗尼禮盒": 1,       
       "墊腳石文具折價券": 250,      
-      "存在音樂購物金1000元":35 ,      
+      "存在音樂購物金1000元":5 ,      
       "存在音樂木吉他獎金1500元": 5
     };
+
+    let resultHistory = JSON.parse(localStorage.getItem("resultHistory")) || [];
+    let prizeList = JSON.parse(localStorage.getItem("prizeList")) || expandPrizePool(prizePool);
+
 
     let prizeList = expandPrizePool(prizePool);
     const colors = [
