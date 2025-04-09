@@ -68,12 +68,14 @@
   <div id="history"></div>
 
   <script>
-    const prizePool = {
+    let prizePool = {
       "黑熊先生布朗尼禮盒": 1,
       "墊腳石文具折價券": 40,
       "存在音樂購物金1000元": 5,
       "存在音樂木吉他獎金1500元": 5
     };
+
+    let prizeList = expandPrizePool(prizePool);
 
     function expandPrizePool(pool) {
       const list = [];
@@ -152,6 +154,15 @@
         document.getElementById("result").textContent = `🎁 恭喜中獎：${selectedPrize}`;
         isSpinning = false;
       }, 2000);
+
+      prizePool[selectedPrize]--;
+      if (prizePool[selectedPrize] <= 0) {
+        delete prizePool[selectedPrize]; // 移除獎項
+}
+
+
+    prizeList = expandPrizePool(prizePool);
+    drawWheel(); // 重畫轉盤
     }
 
     function updateHistory() {
