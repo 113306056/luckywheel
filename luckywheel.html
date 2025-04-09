@@ -62,20 +62,30 @@
   <div class="pointer"></div>
   <canvas id="wheelCanvas" width="300" height="300"></canvas>
   <br>
-  <button onclick="spin()">抽獎</button>
+  <button onclick="spin()">抽下一位</button>
   <button onclick="downloadCSV()">匯出結果</button>
   <div id="result"></div>
   <div id="history"></div>
 
   <script>
     let prizePool = {
-      "黑熊先生布朗尼禮盒": 1,
-      "墊腳石文具折價券": 40,
-      "存在音樂購物金1000元": 5,
-      "存在音樂木吉他獎金1500元": 5
+      "AirPods": 2,
+      "現金500": 3,
+      "神秘小禮": 1,
+      "再接再厲": 4
     };
 
     let prizeList = expandPrizePool(prizePool);
+    const colors = [
+      "#FF6B6B", "#F7B801", "#6BCB77", "#4D96FF",
+      "#B76EF9", "#FF9F1C", "#FFD6E0", "#06D6A0"
+    ];
+
+    const canvas = document.getElementById("wheelCanvas");
+    const ctx = canvas.getContext("2d");
+    let angle = 0;
+    let isSpinning = false;
+    let resultHistory = [];
 
     function expandPrizePool(pool) {
       const list = [];
@@ -86,19 +96,6 @@
       }
       return list;
     }
-
-    let resultHistory = JSON.parse(localStorage.getItem("resultHistory")) || [];
-    let prizeList = JSON.parse(localStorage.getItem("prizeList")) || expandPrizePool(prizePool);
-
-    const colors = [
-      "#FF6B6B", "#F7B801", "#6BCB77", "#4D96FF",
-      "#B76EF9", "#FF9F1C", "#FFD6E0", "#06D6A0"
-    ];
-
-    const canvas = document.getElementById("wheelCanvas");
-    const ctx = canvas.getContext("2d");
-    let angle = 0;
-    let isSpinning = false;
 
     function drawWheel() {
       const arc = 2 * Math.PI / prizeList.length;
@@ -123,7 +120,6 @@
     }
 
     drawWheel();
-    updateHistory();
 
     function spin() {
       if (isSpinning || prizeList.length === 0) return;
@@ -143,33 +139,23 @@
         const selectedPrize = prizeList[randomIndex];
 
         resultHistory.push(selectedPrize);
-        prizeList.splice(randomIndex, 1);
-
-        localStorage.setItem("resultHistory", JSON.stringify(resultHistory));
-        localStorage.setItem("prizeList", JSON.stringify(prizeList));
-
         updateHistory();
+
+        // 更新 prizePool
+        prizePool[selectedPrize]--;
+        if (prizePool[selectedPrize] <= 0) {
+          delete prizePool[selectedPrize];
+        }
+
+        prizeList = expandPrizePool(prizePool);
         drawWheel();
 
         document.getElementById("result").textContent = `🎁 恭喜中獎：${selectedPrize}`;
         isSpinning = false;
       }, 2000);
-
-      prizePool[selectedPrize]--;
-      if (prizePool[selectedPrize] <= 0) {
-        delete prizePool[selectedPrize]; // 移除獎項
-}
-
-
-    prizeList = expandPrizePool(prizePool);
-    drawWheel(); // 重畫轉盤
     }
 
     function updateHistory() {
-      if (resultHistory.length === 0) {
-        document.getElementById("history").innerHTML = "";
-        return;
-      }
       const list = resultHistory.map((p, i) => `${i + 1}. ${p}`).join('<br>');
       document.getElementById("history").innerHTML = `<h3>抽獎記錄</h3>${list}`;
     }
